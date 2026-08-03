@@ -1,17 +1,50 @@
-[2026-07-14T07:24:05.6649840+00:00] Speaker 1: Hi my name is.
-[2026-07-14T07:24:49.4136036+00:00] Speaker 2: Thank you for joining me and thanks for helping with this lesson guys. So you know, we're, we're talking about discussions and the topic. Is it better to study online or in a regular classroom?
-[2026-07-14T07:25:17.8058574+00:00] Speaker 2: OK, OK, so I'll start and I think that it's actually very good to study online because it's a very convenient because you can study whenever you want and at your own pace. And for example, someone like me, I like to study at nighttime. So for me now online works better because it's quiet at night. But what disturbs me like do what I need to.
-[2026-07-14T07:25:19.3890484+00:00] Speaker 3: Do OK, that's true, but if you're going to study online.
-[2026-07-14T07:25:19.4190858+00:00] Speaker 3: When you need, please let me finish.
-[2026-07-14T07:25:32.7046418+00:00] Speaker 3: As I was saying, that's true, but if you're studying online, you do need to motivate yourself. So I think it's better to be in the classroom where you have other students and a teacher can motivate you.
-[2026-07-14T07:25:46.1986740+00:00] Speaker 3: That's true, but some people can't afford to go through and don't have enough money with resources to actually go over big school. So studying online you can actually do it for free.
-[2026-07-14T07:25:53.7104717+00:00] Speaker 3: Let's add message.
-[2026-07-14T07:26:24.1449427+00:00] Speaker 3: Soft skills, that's not usually talked about. It's the most what we talked about soft skills. It's actual interaction, utilizing your English when you're with other people, that's hard to get online because you're watching a screen. You're not actually interacting with other people.
-[2026-07-14T07:26:24.2976754+00:00] Speaker 2: You make a very good point, but I would also like to add that sometimes having classmates takes you away from your focus because you have to maybe refuse things many times for other people to catch up. Or you have to do topics that are interesting to other people, not to yourself. So it's a little distracting sometimes too. However, focus is a good.
-[2026-07-14T07:26:24.3387911+00:00] Speaker 3: Thing. I mean, that's not a bad thing.
-[2026-07-14T07:26:54.1602292+00:00] Speaker 3: Repeat something because sometimes people don't cast material the.
-[2026-07-14T07:26:54.2432685+00:00] Speaker 4: First time. So that's why you go over the material and they get, you know, you get depth so you get to learn more and people who don't understand get the opportunity to.
-[2026-07-14T07:26:54.4036676+00:00] Speaker 3: Ask questions and start from it again. Yeah, but sometimes the resources that you get in the classroom boring and online, you can just look up whatever you need on the Internet and you've got it right there. You'll have to rely on a textbook. So kind of just can be bad textbook. OK, don't get me wrong. I mean there there are good resources on the intern like.
-[2026-07-14T07:26:55.3587306+00:00] Speaker 3: Dot com.
-[2026-07-14T07:27:21.4353221+00:00] Speaker 3: How actually did you say english.com? I did say english.com. I've heard the english.com. I think I have two. I'll check it out. Anyway, it's good website. So as I was saying, don't get me wrong, I think there are excellent resources. However, some students who are just starting English for the first time might not know how to judge the quality of resources. So I think if you go to a school, if you're inside a classroom, you're with a teacher.
-[2026-07-14T07:27:37.4504382+00:00] Speaker 3: This train is a professional and who can give you the resources you need to improve your English. Well, it's a good thing that you said about professional teachers cause in inkvid.com, england.com, ingredient.com. Yeah, we all have profession.
+[2026-07-31T10:00:02.1024810+00:00] Speaker 1: Good morning, everyone. Thanks for jumping on. Let's get started on our Q3 operational and pricing review. Before we dive into the numbers, Alex, how was your weekend? Did you manage to catch the game yesterday?
+[2026-07-31T10:00:18.4820192+00:00] Speaker 2: Hey Sarah! Yeah, it was great. Weather was fantastic out on the coast. How about you?
+[2026-07-31T10:00:25.8910482+00:00] Speaker 1: Can't complain, pretty quiet on my end. Alright, we've got a busy agenda today. We need to review store performance, check our menu pricing across all six of our restaurant brands, and verify our customer distribution figures before board deck prep tomorrow. Marcus, do you have the brand document up? Let's spotlight SmashCraft Burgers first.  
+[2026-07-31T10:00:48.1120485+00:00] Speaker 3: Yeah, pulling it up right now. Looking at the Texas region, SmashCraft Burgers currently has three active locations operating in Austin—Downtown, North Lamar, and out at the Domain—plus our single spot down in San Antonio on the Riverwalk.  
+[2026-07-31T10:01:08.6019382+00:00] Speaker 1: Okay, good. Remind me, what are we currently charging for the Classic Double Smashburger?  
+[2026-07-31T10:01:18.1209481+00:00] Speaker 3: The Classic Double is sitting at a base price of $11.99 across all locations.  
+[2026-07-31T10:01:26.3901928+00:00] Speaker 2: Right, and sales volume on that has been really strong across dine-in and online delivery channels over the last quarter.  
+[2026-07-31T10:01:38.7001923+00:00] Speaker 1: What about the premium burgers? Are we making decent margins on those, or should we consider a price adjustment?
+[2026-07-31T10:01:48.4102931+00:00] Speaker 3: Well, looking at the menu pricing, the Truffle Mushroom Burger is down at $12.99 right now, while the Bacon Avocado Smash sits at $13.49. I think margins on the Truffle one might be getting squeezed a bit by ingredient costs.  
+[2026-07-31T10:02:05.0928102+00:00] Speaker 2: Sorry to interrupt guys, but could someone pass the coffee creamer down the table? Thanks.
+[2026-07-31T10:02:12.3019201+00:00] Speaker 1: Here you go. Okay, let's switch gears and look at our Mexican concept, La Tacoria. Marcus, how is California looking?  
+[2026-07-31T10:02:24.8201923+00:00] Speaker 3: La Tacoria is running three active spots right now—Mission District and SoMa in San Francisco, plus our Berkeley store. Just as a reminder for everyone, the Oakland cantina location was shuttered back in late 2020 and remains closed.  
+[2026-07-31T10:02:42.4019283+00:00] Speaker 4: Yeah, I remember that. On the customer loyalty side though, we've seen solid engagement in the Bay Area. By the way, how many loyalty tiers do we currently run in our rewards program?  
+[2026-07-31T10:02:54.1029381+00:00] Speaker 2: We have four tiers in the system: Bronze, Silver, Gold, and Platinum.  
+[2026-07-31T10:03:03.5910293+00:00] Speaker 4: Got it. And speaking of our loyalty demographic, I was reviewing the user records yesterday, and all 400 of our registered customers in the database are located in Austin.  
+[2026-07-31T10:03:18.1902831+00:00] Speaker 1: Wait, what? Are you sure about that? That doesn't sound right at all. We've been enrolling customers in Chicago, Seattle, and New York for over a year now. Someone needs to double-check that customer data export.  
+[2026-07-31T10:03:34.8291023+00:00] Speaker 2: Yeah, let me flag that for IT. Let me shift document spotlight over to our pizza brand next—Slice & Dice Pizzeria in Chicago. Alex, what's our store footprint looking like over there?  
+[2026-07-31T10:03:48.4019284+00:00] Speaker 2: Sure. Slice & Dice currently has four active locations open across Chicago—The Loop, Wicker Park, Lincoln Park, and River North.  
+[2026-07-31T10:04:02.1029381+00:00] Speaker 1: Okay, good growth there. And what are we selling the 12-inch Pepperoni Double Crunch pizza for right now?  
+[2026-07-31T10:04:12.8192031+00:00] Speaker 3: The 12-inch Pepperoni Double Crunch is currently listed at $14.99 on our POS system.  
+[2026-07-31T10:04:22.3019284+00:00] Speaker 1: Really? $14.99? That seems surprisingly low considering our Meat Lovers Supreme is priced up at $18.99. Are we sure that price didn't get misconfigured?  
+[2026-07-31T10:04:36.5910293+00:00] Speaker 3: What about sides? How much are we charging for an order of Garlic Knots?  
+[2026-07-31T10:04:44.2019382+00:00] Speaker 2: The 6-piece Garlic Knots are selling for $3.99 a portion.  
+[2026-07-31T10:04:53.9102938+00:00] Speaker 1: Huh. We should definitely review those appetizer prices. Is that thunder outside? Did it just start pouring rain?  
+[2026-07-31T10:05:03.1029381+00:00] Speaker 4: Oh wow, yeah, looks like a real downpour out there all of a sudden.
+[2026-07-31T10:05:11.3901928+00:00] Speaker 1: Glad we're stuck in here looking at spreadsheets! Alright, moving right along. Let's switch the doc spotlight over to our Asian concepts—Tokyo Express in New York and Golden Wok in Seattle.  
+[2026-07-31T10:05:28.1029381+00:00] Speaker 3: Tokyo Express is doing great. We have three active stores in New York—Midtown, East Village, and Brooklyn. The Tonkotsu Black Garlic Ramen is still our absolute top seller there at $15.99.  
+[2026-07-31T10:05:45.8192031+00:00] Speaker 1: Excellent. How many locations do we have open for Golden Wok Express in Seattle?  
+[2026-07-31T10:05:54.3901928+00:00] Speaker 3: Golden Wok Express has two active locations in Seattle right now—Chinatown and Capitol Hill.  
+[2026-07-31T10:06:08.1029381+00:00] Speaker 4: Right, and menu performance there is solid. The Kung Pao Chicken Bowl and General Tso Chicken Rice are both priced equally at $13.99.  
+[2026-07-31T10:06:21.8192031+00:00] Speaker 1: Nice. What's the current price on the Shrimp Pad Thai?  
+[2026-07-31T10:06:29.4019284+00:00] Speaker 3: The Shrimp Pad Thai is currently listed at $11.99 on the menu.  
+[2026-07-31T10:06:38.1029381+00:00] Speaker 1: That sounds a bit low for seafood, let's make a note to double-check that price point against our ingredient cost index. By the way, did anyone happen to order lunch for the room yet?  
+[2026-07-31T10:06:49.5910293+00:00] Speaker 2: I think Sarah ordered catering from down the street, should be here around 12:30.
+[2026-07-31T10:06:56.2019382+00:00] Speaker 1: Perfect. Let's spotlight Green Garden Salads up in Boston next. How are those two units holding up?  
+[2026-07-31T10:07:08.3901928+00:00] Speaker 3: Green Garden has two active locations in Boston—Back Bay and Seaport. The Cobb Salad with Grilled Chicken at $13.99 is driving most of the lunch trade.  
+[2026-07-31T10:07:22.1029381+00:00] Speaker 1: Let's quickly review our sides and desserts across all brands. What are we charging for desserts like the Cheesecake slice?  
+[2026-07-31T10:07:33.8192031+00:00] Speaker 2: The New York Cheesecake Slice is set at $4.99 across all stores, while our Chocolate Fudge Milkshake is $6.49.  
+[2026-07-31T10:07:46.4019284+00:00] Speaker 3: And on the side dishes, our Loaded Bacon Cheese Fries are selling for $7.99 and Sweet Potato Fries are $5.99.  
+[2026-07-31T10:07:58.1029381+00:00] Speaker 1: Alex, did you ever fix that air conditioner in your office? It feels a little warm in here.  
+[2026-07-31T10:08:06.3901928+00:00] Speaker 2: Yeah, facilities came by yesterday, should be blowing cold air now.
+[2026-07-31T10:08:14.1029381+00:00] Speaker 1: Good to hear. Now, let's take a look at our channel and transaction metrics across our order volume. What percentage of our total orders are completing successfully versus getting cancelled or refunded?  
+[2026-07-31T10:08:31.8192031+00:00] Speaker 4: Across our total order volume, completed orders are consistently staying around 93%, with cancellations and refunds making up the remaining seven percent.  
+[2026-07-31T10:08:45.4019284+00:00] Speaker 1: That's a healthy completion rate. How about payment methods? Are we accepting all standard digital channels?  
+[2026-07-31T10:08:55.1029381+00:00] Speaker 2: Yes, our registers and online checkout accept credit card, debit card, and Apple Pay only. We completely eliminated cash transactions across all store locations last quarter.  
+[2026-07-31T10:09:12.5910293+00:00] Speaker 1: Wait, did we eliminate cash completely? I thought cash was still accepted as a payment option in the database system? We need to confirm whether cash payments are actually disabled or if they're still being recorded.  
+[2026-07-31T10:09:29.2019382+00:00] Speaker 3: Good point, I'll double check the system parameters on payment processing.  
+[2026-07-31T10:09:38.3901928+00:00] Speaker 1: Are there any menu items currently turned off or out of stock across our locations?  
+[2026-07-31T10:09:47.8192031+00:00] Speaker 2: No, all 60 menu items across burgers, mexican, pizza, asian, sides, and beverages are fully marked as available for order right now.  
+[2026-07-31T10:10:02.4019284+00:00] Speaker 1: Perfect. That gives us a comprehensive overview of stores, pricing discrepancies, and operational metrics. Let's wrap up this portion of the call and take a 5-minute break.
