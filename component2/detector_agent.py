@@ -56,27 +56,129 @@ For each candidate line, work through these checks in order:
 Then classify into exactly one type (a line may produce more than one flag if it
 genuinely qualifies for more than one):
 
-- "question": passes checks 1-4, AND seeks a decision, clarification, commitment, or
-  information affecting the meeting's outcome or someone's action items.
+- "question": passes checks 1-4, AND is genuinely interrogative in the ORIGINAL
+  line (see check 1), AND seeks a decision, clarification, commitment, or
+  information that isn't already settled — something someone in the meeting is
+  actually uncertain about, or wants confirmed or looked up.
+
+  Calibration:
+    A tag-question or rhetorical check that gets answered later in the SAME
+    NEW SINCE LAST CHECK batch is STILL a "question" at the moment it's asked —
+    flag it as a question AND flag the answer separately as its own fact. Don't
+    collapse the two into a single fact and silently drop the question.
+      e.g. "Was it $115.2 billion? ... No, that's the full year figure, Q4 was
+      $35.6 billion" → TWO flags: a question ("Is the figure $115.2 billion?")
+      and a fact ("Q4 revenue was $35.6 billion") — never just the fact alone.
+    A rhetorical question that only introduces a statement the speaker is about
+    to make themselves, with no real uncertainty (e.g. "You know what stood out
+    to me? The numbers were huge.") is NOT a "question" — evaluate the statement
+    that follows it as the candidate line instead.
+
+  Consistency rule: "type" and "resolved_text" must always agree. If
+  resolved_text is phrased as an interrogative ("Does X confirm Y?", "Is Z
+  true?"), type MUST be "question." If type is "fact," resolved_text MUST be
+  declarative. Never emit an interrogative resolved_text under type "fact," or
+  a declarative resolved_text under type "question."
 - "fact": passes checks 2-4, AND is a concrete, checkable detail — a specific figure,
   date, decision, or named commitment that others might act on or verify. Not a vague
   opinion or restatement of something already in CONTEXT. A stated intention to
-  follow up on something IS a fact (it's a commitment). A sentence with no number,
-  date, decision, or named commitment — including a qualitative claim that just
-  sounds positive or important, a meta-comment about the meeting itself, or narration
-  of what's on screen during a walkthrough — is NOT a fact, even sitting right next to
-  one that is.
-- "document_lookup": passes checks 2-4, AND is an instruction/request to bring up,
-  switch to, or look at a specific named document, section, or topic — or references
-  a specific document/company/policy named in the KNOWLEDGE BASE CONTEXT section if
-  one is present. Not a vague reference with no identifiable target.
+  follow up on something IS a fact (it's a commitment). A sentence with NO specific number, 
+  date, named entity, decision, or named commitment is NOT a fact — this includes agreement 
+  fillers ('That sounds right', 'Agreed', 'Yes'), qualitative summary comments ('the strategy 
+  is the bigger takeaway'), and narration of what someone is reading ('the report is making a point about...').
+  Being related to KB content does NOT lower the bar — a KB-related line still must contain a 
+  specific number, date, named decision, or named commitment to qualify as a fact. A meta-comment 
+  about a document ('the report is making a point about supply chain scale') is NOT a fact 
+  even if the document is in the knowledge base.
+  Calibration — this distinction is the most common source of error, so apply it
+  carefully. Two lines can both mention the same real entity, but only one is a fact:
+
+    NOT a fact (evaluative/summary commentary — no new checkable content):
+      "The numbers really tell the story here."
+      "That's the part that matters most, honestly."
+      "It's more about the constraints than the scale."
+      "This section is pretty different in tone from the last one."
+  
+    IS a fact (specific, independently checkable):
+      "Costs went up 18 percent compared to last quarter."
+      "Coverage is limited to claims filed within 90 days."
+      "The contract renews automatically unless cancelled by March 1st."
+  
+  The difference is never about which document or topic is being discussed — it's
+  whether the sentence itself carries a number, date, named decision, or named
+  commitment. Before flagging, apply this test: if you removed every number, date,
+  and proper noun from the line, would any checkable claim remain? If no, it's
+  commentary — discard it, even if it's clearly about something in the knowledge
+  base and even if it "sounds important."
+  
+  If a NEW line contains more than one independently checkable clause (e.g. two
+  "if X then Y" statements joined by a period, or a list of separate commitments),
+  evaluate and flag EACH clause on its own. Do not skip a later clause just because
+  an earlier one in the same line already produced a flag — repetition of sentence
+  shape is not repetition of content.
+- "document_lookup": passes checks 2-4, AND the conversation's focus is shifting to
+  (or opening on) a specific named document, section, or topic described in the
+  KNOWLEDGE BASE CONTEXT section, if one is present. This includes:
+    - Explicit retrieval requests ("show me...", "pull up...", "find the section on...").
+    - Natural spoken topic transitions that name or clearly identify a DIFFERENT
+      document than what's currently in focus — e.g. "let's start with...",
+      "now let's move to...", "coming back to...", "switching to...". These aren't
+      phrased as commands, but they still mean a different document needs to come
+      into view, which is exactly what this flag exists to catch.
+    - The opening line of a meeting, if it names or clearly identifies which
+      document the discussion is beginning with.
+  Only flag the line that INTRODUCES the shift. Once a document is the active
+  topic, further discussion of it is fact/question territory — do not re-flag
+  document_lookup just because the document's name comes up again.
+  NOT: a request to focus on a sub-topic WITHIN the document already active
+  (e.g. "let's look at the arbitration clause" when that clause, inside the
+  document already in focus, is what's already being discussed). That's staying
+  inside the same document, not shifting to a new one — do not flag it.
+  When the document isn't named explicitly in the line itself (e.g. "let's start
+  with the annual report," no company given), use the rest of NEW SINCE LAST
+  CHECK — not just CONTEXT — to identify which specific document from KNOWLEDGE
+  BASE CONTEXT is meant, the same way you would for a fact. resolved_text must
+  always be a retrieval instruction naming a real document, never a description
+  of the line itself or of your own detection process (e.g. never "the document
+  being discussed at the start of the meeting" — that describes what you noticed,
+  not what to retrieve). If the document genuinely cannot be identified from
+  anything in CONTEXT or NEW SINCE LAST CHECK, skip the flag rather than emit an
+  unusable one.
+  If the line doesn't clearly identify which specific document it's moving to,
+  don't flag it — see check 3.
 
 Field guidance:
 - "text": the actual words spoken, quoted directly — never a description of what was
   said.
-- "resolved_text": the SAME content rewritten as a complete, standalone sentence,
-  using CONTEXT to fill in pronouns and missing pieces. If you can't do this
-  confidently, don't flag the line — see check 3.
+- "resolved_text": a rewritten, standalone version optimized for a downstream RAG
+  sub-agent to search the knowledge base with — NOT a lightly cleaned copy of the
+  spoken line. Use CONTEXT to fill in pronouns and missing pieces, and:
+    - For "fact": phrase it as a checkable claim, naming the document it relates
+      to using its EXACT title from KNOWLEDGE BASE CONTEXT (e.g. "Nvidia 2025
+      Annual Report", not "the annual report"). If KNOWLEDGE BASE CONTEXT lists
+      more than one document of the same general kind, a generic label like "the
+      annual report" or "the policy" is NOT specific enough — it's unusable for
+      retrieval. Use CONTEXT *and the rest of NEW SINCE LAST CHECK* (the whole
+      batch, not just this line) to work out which exact one is meant, by
+      matching entities, numbers, or topics against each document's description.
+      Only use a generic label if the knowledge base genuinely contains just one
+      document of that kind. If you truly cannot resolve which specific document
+      is meant even using the full batch, state the claim without a document
+      name rather than guessing wrong.
+    - For "question": phrase it as an explicit verification query against the
+      knowledge base, naming the document using its EXACT title from KNOWLEDGE BASE
+      CONTEXT (e.g. "Does the Nvidia 2025 Annual Report confirm revenue of
+      $130.5 billion?"). If KNOWLEDGE BASE CONTEXT contains more than one document
+      of the same kind (for example, multiple annual reports or multiple policies),
+      never use a generic name like "the annual report" or "the policy". Use
+      CONTEXT and the rest of NEW SINCE LAST CHECK to determine which exact
+      document is being referred to. If you genuinely cannot determine the correct
+      document, ask the question without naming a document rather than guessing.
+    - For "document_lookup": phrase it as a direct retrieval instruction naming
+      the specific document (e.g. "Retrieve the SBI Health Policy document"
+      rather than "Now let's switch to the SBI health policy").
+  If you cannot produce a confident, complete resolved_text this way, don't flag
+  the line — see check 3.
 - "passes_relevance_test": a few words on why this line clears checks 1-4 above.
 
 Every line in NEW SINCE LAST CHECK is labeled "[speaker @ Xs]". Copy the exact speaker
