@@ -36,7 +36,75 @@ async def _print_flags(uri: str):
         async for message in ws:
             flag = json.loads(message)
             tab = _TAB_NAMES.get(flag["type"], "FACTS")
-            print(f"[{tab}] ({flag['speaker']} @ {flag['elapsed_seconds']:.1f}s) {flag['resolved_text']}")
+
+            # Initial detection
+            if not flag.get("resolved", False):
+                print(
+                    f"[{tab}] "
+                    f"({flag['speaker']} @ {flag['elapsed_seconds']:.1f}s) "
+                    f"{flag['resolved_text']}"
+                )
+                continue
+
+            # ---------- Resolved results ----------
+
+            if flag["type"] == "fact":
+                print(
+                    f"[FACT CHECK] "
+                    f"({flag['speaker']} @ {flag['elapsed_seconds']:.1f}s)"
+                )
+                print(f"  Claim     : {flag['resolved_text']}")
+                print(f"  Verdict   : {flag.get('verdict', 'Unknown')}")
+
+                if flag.get("correct_fact"):
+                    print(f"  Correct   : {flag['correct_fact']}")
+
+                if flag.get("citation_document"):
+                    print(f"  Source    : {flag['citation_document']}")
+
+                if flag.get("citation_url"):
+                    print(f"  URL       : {flag['citation_url']}")
+
+                print()
+
+            elif flag["type"] == "question":
+                print(
+                    f"[QUESTION ANSWERED] "
+                    f"({flag['speaker']} @ {flag['elapsed_seconds']:.1f}s)"
+                )
+                print(f"  Question  : {flag['resolved_text']}")
+                print(f"  Answer    : {flag.get('answer', 'No answer found.')}")
+
+                if flag.get("citation_document"):
+                    print(f"  Source    : {flag['citation_document']}")
+
+                if flag.get("citation_url"):
+                    print(f"  URL       : {flag['citation_url']}")
+
+                print()
+
+            elif flag["type"] == "document_lookup":
+                print(
+                    f"[DOCUMENT LOOKUP RESULT] "
+                    f"({flag['speaker']} @ {flag['elapsed_seconds']:.1f}s)"
+                )
+                print(f"  Mention   : {flag['resolved_text']}")
+                print(f"  Found     : {flag.get('document_found', False)}")
+
+                if flag.get("citation_document"):
+                    print(f"  Document  : {flag['citation_document']}")
+
+                if flag.get("citation_url"):
+                    print(f"  URL       : {flag['citation_url']}")
+
+                print()
+
+            else:
+                print(
+                    f"[{tab}] "
+                    f"({flag['speaker']} @ {flag['elapsed_seconds']:.1f}s) "
+                    f"{flag['resolved_text']}"
+                )
 
 
 async def main(path: str, speed: float, session: str, host: str):

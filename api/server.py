@@ -32,9 +32,13 @@ load_dotenv()
 from shared.schema import TranscriptChunk
 from component2.pipeline import DetectorPipeline
 from component2.dispatcher import WebSocketDispatcher
+from component3.resolving_dispatcher import ResolvingDispatcher
 
 log = logging.getLogger(__name__)
 app = FastAPI(title="Meeting Intelligence Detection Service")
+
+from fastapi.staticfiles import StaticFiles
+app.mount("/ui", StaticFiles(directory="ui", html=True), name="ui")
 
 # session_id -> DetectorPipeline. One active pipeline per live meeting, each with its
 # own WindowBuffer/DedupEngine state, so multiple meetings can run detection
@@ -77,7 +81,7 @@ async def ingest_endpoint(websocket: WebSocket, session_id: str):
     pipeline = _active_sessions.get(session_id)
     if pipeline is None:
         pipeline = DetectorPipeline()
-        pipeline.dispatcher = WebSocketDispatcher()
+        pipeline.dispatcher = ResolvingDispatcher(WebSocketDispatcher())
         _active_sessions[session_id] = pipeline
 
     try:
@@ -92,7 +96,7 @@ async def ingest_endpoint(websocket: WebSocket, session_id: str):
 async def flags_endpoint(websocket: WebSocket, session_id: str):
     await websocket.accept()
     pipeline = _active_sessions.get(session_id)
-    if pipeline is None or not isinstance(pipeline.dispatcher, WebSocketDispatcher):
+    if pipeline is None or not hasattr(pipeline.dispatcher, "register"):
         await websocket.close(code=4404, reason=f"No active session: {session_id}")
         return
 

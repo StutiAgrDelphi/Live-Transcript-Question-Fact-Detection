@@ -1,0 +1,208 @@
+<!-- ui/dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Meeting Intelligence — Live Flags</title>
+<style>
+  :root {
+    --correct: #1a7f37;
+    --incorrect: #cf222e;
+    --unverifiable: #9a6700;
+    --border: #1f2328;
+  }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    background: #f6f8fa;
+    color: #1f2328;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+  }
+  header h1 { font-size: 16px; margin: 0; flex: 1; }
+  header input {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+    width: 160px;
+  }
+  header button {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #1f2328;
+    color: #fff;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  #status { font-size: 12px; color: #6e7781; }
+  #status.connected { color: var(--correct); }
+  #status.error { color: var(--incorrect); }
+
+  .columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    padding: 16px;
+    align-items: start;
+  }
+  .column h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #57606a;
+    margin: 0 0 10px 4px;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .card .meta {
+    font-size: 11px;
+    color: #6e7781;
+    padding: 10px 12px 0 12px;
+  }
+  .card .text {
+    padding: 4px 12px 12px 12px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .card .resolution {
+    border-top: 1px solid var(--border);
+    padding: 10px 12px;
+    font-size: 13px;
+    background: #fafbfc;
+  }
+  .card .resolution.pending { color: #6e7781; font-style: italic; }
+  .verdict { font-weight: 600; }
+  .verdict.correct { color: var(--correct); }
+  .verdict.incorrect { color: var(--incorrect); }
+  .verdict.unverifiable { color: var(--unverifiable); }
+  .correction { margin-top: 4px; color: #1f2328; }
+  .source {
+    display: block;
+    margin-top: 6px;
+    font-size: 11px;
+    color: #57606a;
+    text-decoration: none;
+  }
+  .source:hover { text-decoration: underline; }
+  .not-found { color: var(--incorrect); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Meeting Intelligence — Live Flags</h1>
+  <input id="sessionInput" placeholder="session id" />
+  <button onclick="connect()">Connect</button>
+  <span id="status">disconnected</span>
+</header>
+
+<div class="columns">
+  <div class="column"><h2>Facts</h2><div id="col-fact"></div></div>
+  <div class="column"><h2>Questions</h2><div id="col-question"></div></div>
+  <div class="column"><h2>Document Lookup</h2><div id="col-document_lookup"></div></div>
+</div>
+
+<script>
+let ws = null;
+
+function connect() {
+  const params = new URLSearchParams(window.location.search);
+  const session = document.getElementById("sessionInput").value || params.get("session") || "test1";
+  document.getElementById("sessionInput").value = session;
+
+  if (ws) ws.close();
+
+  const proto = window.location.protocol === "https:" ? "wss" : "ws";
+  const host = window.location.host || "localhost:8000";
+  ws = new WebSocket(`${proto}://${host}/ws/flags/${session}`);
+
+  const statusEl = document.getElementById("status");
+  ws.onopen = () => { statusEl.textContent = `connected — ${session}`; statusEl.className = "connected"; };
+  ws.onclose = () => { statusEl.textContent = "disconnected"; statusEl.className = ""; };
+  ws.onerror = () => { statusEl.textContent = "connection error"; statusEl.className = "error"; };
+  ws.onmessage = (event) => renderFlag(JSON.parse(event.data));
+}
+
+function renderFlag(flag) {
+  const colId = "col-" + flag.type;
+  const col = document.getElementById(colId);
+  if (!col) return;  // unknown flag type, ignore
+
+  let card = document.getElementById("flag-" + flag.flag_id);
+  if (!card) {
+    card = document.createElement("div");
+    card.className = "card";
+    card.id = "flag-" + flag.flag_id;
+    card.innerHTML = `
+      <div class="meta">${escapeHtml(flag.speaker)} @ ${flag.elapsed_seconds.toFixed(1)}s</div>
+      <div class="text">${escapeHtml(flag.resolved_text)}</div>
+      <div class="resolution pending">checking…</div>
+    `;
+    col.prepend(card);  // newest on top
+  }
+
+  if (flag.resolved) {
+    card.querySelector(".resolution").outerHTML = buildResolutionHtml(flag);
+  }
+}
+
+function buildResolutionHtml(flag) {
+  const source = flag.citation_url
+    ? `<a class="source" href="${escapeAttr(flag.citation_url)}" target="_blank">Source: ${escapeHtml(flag.citation_document || "")}</a>`
+    : "";
+
+  if (flag.type === "fact") {
+    const verdict = flag.verdict || "unverifiable";
+    const label = { correct: "Correct", incorrect: "Incorrect", unverifiable: "Unverifiable" }[verdict] || verdict;
+    const correction = (verdict === "incorrect" && flag.correct_fact)
+      ? `<div class="correction">${escapeHtml(flag.correct_fact)}</div>` : "";
+    return `<div class="resolution"><span class="verdict ${verdict}">${label}</span>${correction}${source}</div>`;
+  }
+
+  if (flag.type === "question") {
+    const answer = flag.answer ? escapeHtml(flag.answer) : "No answer found.";
+    return `<div class="resolution">${answer}${source}</div>`;
+  }
+
+  if (flag.type === "document_lookup") {
+    if (flag.document_found) {
+      const url = escapeAttr(flag.citation_url || "#");
+      return `<div class="resolution"><a href="${url}" target="_blank">${escapeHtml(flag.citation_document || "Open document")}</a></div>`;
+    }
+    return `<div class="resolution"><span class="not-found">NOT FOUND</span></div>`;
+  }
+
+  return `<div class="resolution"></div>`;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str ?? "";
+  return div.innerHTML;
+}
+function escapeAttr(str) {
+  return (str ?? "").replace(/"/g, "&quot;");
+}
+
+// Auto-connect if ?session=... is already in the URL
+window.onload = () => {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("session")) connect();
+};
+</script>
+
+</body>
+</html>
