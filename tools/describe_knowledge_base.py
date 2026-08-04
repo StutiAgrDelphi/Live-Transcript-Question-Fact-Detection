@@ -26,6 +26,7 @@ import warnings
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+import argparse
 
 from dotenv import load_dotenv
 
@@ -255,14 +256,49 @@ Columns:
 {sample_section}
 
 === TASK ===
-Write a concise but specific description (3–6 paragraphs) covering:
+You are writing a reference document for a real-time meeting detection AI agent.
+This agent monitors live meeting transcripts and must instantly decide whether
+something spoken relates to content in this database. Your output will be injected
+directly into that agent's system prompt.
 
-1. What this table represents — its overall purpose and the domain it serves.
-2. The range of topics, categories, or subject matter actually present in the sampled rows — be specific and list real examples directly from the sample above. Do NOT invent or guess categories that are not evidenced by the sample.
-3. What kinds of questions someone might ask in a business meeting that this database could help answer — again, grounded in what the sample actually shows, not generic guesses.
-4. The vocabulary or terminology someone in a meeting would naturally use to refer to this content — specific named entities, product names, category names, or domain terms that appear in the sample. This will be used to help a real-time meeting assistant recognise when conversation turns toward content this database can provide.
+If the sampled rows contain chunk names or content IDs (e.g. 'Nvidia_2025_Annual_Report_chunk_15'), 
+extract the base document names from those identifiers and list them explicitly in 'Documents and 
+sources present' even if the chunk content itself does not clearly reveal the topic
 
-Be concrete and specific. Avoid vague phrases like "a wide variety of topics" — name the actual topics you see. If the sample is too sparse to draw conclusions about a section, say so explicitly rather than guessing.
+Write output in EXACTLY this structure (use these exact headings):
+
+### What this knowledge base contains
+One paragraph: what kind of data this table holds, what domain it serves, what
+the documents/records are actually about. Be specific — name the actual documents,
+companies, and policies you see in the sample. Do NOT use vague phrases like
+"a variety of topics."
+
+### Documents and sources present
+A bullet list of every distinct document, company, policy, or named source
+identifiable from the sampled content. Format each as:
+- **[Document/Source Name]** — [1-sentence description of what it covers]
+
+Real meeting speech paraphrases documents loosely — people will not quote column
+names or exact clause titles out loud. For "Trigger phrases and vocabulary",
+include not just exact terms from the data, but also natural spoken paraphrases
+someone would plausibly use to refer to the same concept in conversation.
+
+### Trigger phrases and vocabulary
+A flat list of specific terms, names, numbers, and phrases that would appear
+in a meeting conversation when someone is discussing content from this database.
+These are the signals the agent listens for. Include: company names, document
+names, policy names, specific financial figures if present, specific clause names,
+product names, regulation names. Format as a comma-separated list.
+
+### What to flag as document_lookup
+Specific examples of phrases a meeting participant might say that should be
+classified as a document_lookup pointing to content in this database. Give
+5-8 concrete examples drawn from the actual content in the sample.
+Format as a bullet list of quoted phrases.
+
+Do NOT write prose paragraphs beyond the "What this knowledge base contains"
+section. The rest must be structured lists — the agent needs to scan this quickly
+mid-classification.
 """
 
 
@@ -328,10 +364,22 @@ async def _describe_table(
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+def _parse_args():
+    parser = argparse.ArgumentParser(description="Generate knowledge_base_context.md")
+    parser.add_argument(
+        "--table",
+        action="append",
+        default=None,
+        metavar="schema.table",
+        help="Restrict to specific table(s), repeatable. Omit to auto-discover the whole DB.",
+    )
+    return parser.parse_args()
+
 
 async def main():
     from sqlalchemy import inspect as sa_inspect
 
+    args = _parse_args()
     print("=" * 60)
     print("Knowledge Base Description Generator")
     print("=" * 60)
@@ -340,31 +388,32 @@ async def main():
     client = _build_llm_client()
     insp = sa_inspect(engine)
 
-    # Discover all tables across all schemas the connection can see.
-    # get_schema_names() returns everything the role has access to — on Postgres this
-    # includes 'information_schema' and 'pg_catalog'; we skip those.
-    # SKIP_SCHEMAS = {"information_schema", "pg_catalog", "pg_toast"}
+    if args.table:
+        tables_found = []
+        for spec in args.table:
+            if "." in spec:
+                schema, table_name = spec.split(".", 1)
+            else:
+                schema, table_name = None, spec
+            tables_found.append((schema, table_name))
+    else:
+        SKIP_SCHEMAS = {"information_schema", "pg_catalog", "pg_toast"}
+        tables_found = []
+        try:
+            schemas = insp.get_schema_names()
+        except Exception:
+            schemas = [None]
 
-    # tables_found: List[Tuple[Optional[str], str]] = []
-    
-    # try:
-    #     schemas = insp.get_schema_names()
-    # except Exception:
-    #     # Some backends don't support schema listing — fall back to default schema
-    #     schemas = [None]
-
-    # for schema in schemas:
-    #     if schema in SKIP_SCHEMAS:
-    #         continue
-    #     try:
-    #         for table_name in insp.get_table_names(schema=schema):
-    #             tables_found.append((schema, table_name))
-    #         for view_name in insp.get_view_names(schema=schema):
-    #             tables_found.append((schema, view_name))
-    #     except Exception as e:
-    #         log.warning(f"Could not list tables in schema '{schema}': {e}")
-
-    tables_found = [("ai", "general_knowledge")]
+        for schema in schemas:
+            if schema in SKIP_SCHEMAS:
+                continue
+            try:
+                for table_name in insp.get_table_names(schema=schema):
+                    tables_found.append((schema, table_name))
+                for view_name in insp.get_view_names(schema=schema):
+                    tables_found.append((schema, view_name))
+            except Exception as e:
+                log.warning(f"Could not list tables in schema '{schema}': {e}")
 
     if not tables_found:
         print("No tables found. Check DATABASE_URL and connection permissions.")

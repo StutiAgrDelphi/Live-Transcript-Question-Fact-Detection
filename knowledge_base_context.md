@@ -1,13 +1,29 @@
 # Knowledge Base Context
 
-Generated: 2026-08-03 10:05 UTC
+Generated: 2026-08-04 09:47 UTC
 
 ## ai.general_knowledge
 
-`ai.general_knowledge` appears to be a general-purpose text knowledge store made up of chunked document excerpts, likely used for retrieval and semantic search over internal or ingested source material. The rows include chunk-style names such as `2024_Annual_Report_Netflix_chunk_15`, `2024_Annual_Report_Apple_v3_chunk_34`, `1_National_Health_Policy_2017_English__chunk_138`, and `Approved_IT_Policy_CIL_and_Subsidiaries_chunk_7`, which suggests the table is not a curated facts table but a repository of extracted passages from many documents. The presence of `content`, `content_hash`, `content_id`, `meta_data/metadata`, and `embedding` fields reinforces that this is a vector-search index for document fragments.
+### What this knowledge base contains
+This table stores chunked text from reference documents and reports, mostly corporate annual reports and policy/insurance documents, with metadata and embeddings for semantic search. The sampled rows show content from Netflix annual reports, Meta annual reports, Apple annual reports, Walmart annual reports, an SBI Health Policy insurance document, and India’s National Health Policy 2017. The records appear to be extracted document passages used for lookup, retrieval, and citation, covering topics like market risk, diversity and inclusion programs, security and privacy, business seasonality, health insurance claims and exclusions, and public health policy objectives.
 
-The sampled content spans several clearly identifiable domains. It includes corporate annual-report material from companies such as Netflix, Apple, and Walmart, with sections like “ABOUT US,” “Research and Development,” “Available Information,” and a Walmart statement about “Well-being - Prioritize the emotional, physical and financial well-being of associates.” It also includes policy and public-sector text such as the “National Health Policy 2017” section “Application of Digital Health,” plus an IT policy for Coal India and subsidiaries (“Policy on the Use of IT Resources”). Another sample is from SBI General Insurance, showing corporate and registered office details for “SBI General Insurance Company Limited.” The sample does not show anything beyond these kinds of business, policy, and corporate-document excerpts.
+### Documents and sources present
+- **Netflix 2024 Annual Report** — Includes sections on market risk, debt, security/privacy organization, and other corporate governance and risk disclosures.
+- **Meta 2023 Annual Report** — Covers company programs such as community summits, unconscious bias, inclusion, and diversity-related initiatives.
+- **SBI Health Policy** — An insurance policy document describing hospitalization coverage, claim processing, exclusions, and policy terms.
+- **National Health Policy 2017** — India’s health policy outlining goals, principles, objectives, stewardship, and strategic purchasing in the health sector.
+- **Apple 2024 Annual Report** — Includes business seasonality and product introduction-related disclosures.
+- **Walmart 2024 Annual Report** — Discusses belonging, diversity, equity and inclusion, and opportunity for associates and communities.
 
-In a meeting, this table could help answer questions like: “What does Netflix say in its latest annual report about its business and memberships?”, “Where does Apple discuss research and development or supply-chain risk?”, “What does the National Health Policy say about tele-consultation or digital health?”, or “What are the IT resource usage rules for Coal India and its subsidiaries?” It could also support quick retrieval of company-identification or compliance details, such as corporate office information for SBI General Insurance, or general disclosures and filing references in annual reports.
+### Trigger phrases and vocabulary
+Netflix 2024 Annual Report, Meta 2023 Annual Report, Apple 2024 Annual Report, Walmart 2024 Annual Report, SBI Health Policy, National Health Policy 2017, Item 7A, Quantitative and Qualitative Disclosures about Market Risk, market risk, interest rate changes, debt market values, security and privacy engineering, information security program, community summit, Black Community Summit, Latin Community Summit, Pride Community Summit, unconscious bias, inclusion, diversity, belonging, equity and inclusion, hospitalization expenses, claim documents, claim processing, exclusions, pre existing diseases exclusion, policy terms and conditions, strategic purchasing, stewardship, goal principles and objectives, business seasonality, product introductions
 
-The vocabulary a meeting assistant should listen for includes company and document names such as “Netflix,” “Apple,” “Walmart,” “SBI General Insurance Company Limited,” “Coal India and Subsidiaries,” and “National Health Policy 2017.” It should also recognize report and policy terms like “Annual Report,” “Form 10-K,” “Form 10-Q,” “Current Reports on Form 8-K,” “Research and Development,” “Available Information,” “tele-consultation,” “digital health,” “IT Resources,” and “Policy on the Use of IT Resources.” The sample is too sparse to infer a broader taxonomy beyond corporate reporting, health policy, and IT policy content.
+### What to flag as document_lookup
+- "Can you pull up the Netflix annual report section on market risk?"
+- "I need the part about interest rate changes and market values of debt."
+- "Show me the Meta report where they talk about Black Community Summit and Pride Community Summit."
+- "Find the SBI health policy clause on claim processing."
+- "Look up the exclusions section, especially pre-existing diseases."
+- "What does the National Health Policy 2017 say about strategic purchasing?"
+- "Bring up the Apple annual report discussion of business seasonality."
+- "Search the Walmart report for belonging, diversity, equity and inclusion."

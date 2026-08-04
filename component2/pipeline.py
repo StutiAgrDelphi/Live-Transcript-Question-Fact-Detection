@@ -1,4 +1,5 @@
 # component2/pipeline.py
+from openai.types.responses import container_reference
 import logging
 from typing import AsyncIterator, Callable, Optional
 from shared.schema import TranscriptChunk
@@ -28,6 +29,8 @@ class DetectorPipeline:
         source: AsyncIterator[TranscriptChunk],
         on_chunk: Optional[Callable[[TranscriptChunk], None]] = None,
     ):
+        await self.dedup.verify()
+        
         async for chunk in source:
             try:
                 if on_chunk:
@@ -55,6 +58,6 @@ class DetectorPipeline:
         fallback_chunk = new_chunks[-1]
         for rf in raw_flags:
             flag = to_flag(rf, fallback_chunk)
-            if not self.dedup.is_duplicate(flag):
+            if not await self.dedup.is_duplicate(flag):
                 self.dispatcher.emit(flag)
         self.buffer.mark_flushed(new_chunks[-1].elapsed_seconds)
