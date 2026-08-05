@@ -37,9 +37,10 @@ For each candidate line, work through these checks in order:
 1. Grammatical gate (question only): is it interrogative in structure (question mark,
    or question word order — "did you...", "what is...")? An imperative or declarative
    sentence is never a "question," no matter what it requests or proposes.
-2. Meeting-mechanics/small-talk check: is this about the people, the room, or the call
-   itself, rather than the meeting's actual content — e.g. audio/video/screen-share
-   checks, food, weather, sports/personal-life chat, personal favors, or other
+2. Meeting-mechanics/small-talk check: is this about the people, the room, or the
+   call itself, rather than the meeting's actual content — e.g. audio/video/screen-
+   share checks, food, weather, sports/personal-life chat, personal favors,
+   someone stepping away or being interrupted, pauses in discussion, or other
    logistics unrelated to why the meeting is happening? If yes, do not flag it —
    regardless of type.
 3. Standalone coherence: could you write a complete, understandable resolved_text for
@@ -79,30 +80,73 @@ genuinely qualifies for more than one):
   true?"), type MUST be "question." If type is "fact," resolved_text MUST be
   declarative. Never emit an interrogative resolved_text under type "fact," or
   a declarative resolved_text under type "question."
-- "fact": passes checks 2-4, AND is a concrete, checkable detail — a specific figure,
-  date, decision, or named commitment that others might act on or verify. Not a vague
-  opinion or restatement of something already in CONTEXT. A stated intention to
-  follow up on something IS a fact (it's a commitment). A sentence with NO specific number, 
-  date, named entity, decision, or named commitment is NOT a fact — this includes agreement 
-  fillers ('That sounds right', 'Agreed', 'Yes'), qualitative summary comments ('the strategy 
-  is the bigger takeaway'), and narration of what someone is reading ('the report is making a point about...').
-  Being related to KB content does NOT lower the bar — a KB-related line still must contain a 
-  specific number, date, named decision, or named commitment to qualify as a fact. A meta-comment 
-  about a document ('the report is making a point about supply chain scale') is NOT a fact 
-  even if the document is in the knowledge base.
-  Calibration — this distinction is the most common source of error, so apply it
-  carefully. Two lines can both mention the same real entity, but only one is a fact:
+- "fact": passes checks 2-4, AND is a concrete, checkable claim about what a
+  document or topic actually SAYS, STATES, DEFINES, or REQUIRES — something
+  that could plausibly appear as a sentence inside the source document itself.
 
-    NOT a fact (evaluative/summary commentary — no new checkable content):
-      "The numbers really tell the story here."
-      "That's the part that matters most, honestly."
-      "It's more about the constraints than the scale."
-      "This section is pretty different in tone from the last one."
-  
-    IS a fact (specific, independently checkable):
-      "Costs went up 18 percent compared to last quarter."
-      "Coverage is limited to claims filed within 90 days."
-      "The contract renews automatically unless cancelled by March 1st."
+  A fact is NEVER:
+    - An action item or task assignment — who will do, review, verify, or
+      follow up on something. This is true even if it names a real document
+      from the knowledge base ("Anna will review the SBI policy" is about
+      Anna, not about what the SBI policy says — do not flag it, and it must
+      never be checked against the knowledge base).
+    - A meta-comment about the meeting itself (a question "has been
+      answered," a topic "being discussed," someone "reading" or "looking
+      at" a document).
+    - Someone's personal opinion or reaction attributed to them ("Alok found
+      the definitions precise," "the team thinks this is the hardest
+      document") — this is a claim about what a person believes, not about
+      the document, and checking it against the document will always
+      produce a meaningless verdict either way.
+    - Meeting mechanics or someone's personal circumstance, even when it
+      happens right next to KB-relevant discussion (stepping away from the
+      call, being interrupted, a pause in discussion, "I read this
+      yesterday"). These belong under check 2 — treat them as excluded there
+      regardless of what's being discussed around them.
+
+  Test before flagging — apply BOTH tests:
+  1. Document-fit test: if you dropped this sentence into the actual source
+     document, would it fit as something the document itself might say?
+     If it describes a person's action, opinion, presence, or the meeting
+     itself instead, it fails — do not flag it.
+  2. Interpretation-verb test: does the sentence use a verb like "presents,"
+     "frames," "emphasizes," "conveys," "positions," "pushes," "describes,"
+     "treats," "indicates," or "highlights"? These are interpretation verbs
+     — they describe what a reader thinks about a document, not what the
+     document actually states. A sentence with these verbs is commentary, not
+     a fact — discard it, even if it names a real document and a real number.
+     Exception: if the verb is "states," "says," "defines," "requires,"
+     "reports," or "confirms," that's a direct-quote verb and the sentence
+     can proceed to the normal fact test.
+
+  NOT a fact (generic examples — same reasoning applies regardless of domain):
+    "Maria will review the compliance policy before Friday." (action item)
+    "James thinks the contract is hard to read." (opinion about a document)
+    "That question has already been answered." (meta-comment about meeting)
+    "Priya was reading the report yesterday." (personal activity)
+    "We paused the discussion for a moment." (meeting mechanics)
+      - A characterization or interpretation of what a document "presents,"
+      "frames," "emphasizes," "describes," "conveys," or "positions" — even
+      if true. ("The report frames NVIDIA as an AI factory" is NOT a fact
+      you can check against the report; only "The report states X" where X
+      is a specific verbatim or near-verbatim claim is checkable.) If the
+      verb is interpret/frame/emphasize/convey/position/push, discard it.
+    - A comparison between two documents or a general observation about
+      document style ("Document A is expansive, Document B is specific,"
+      "this is a definition-heavy policy," "policy documents usually focus
+      on key clauses") — these are observations about documents, not claims
+      from them.
+    - A recap or summary of multiple facts already stated earlier in the
+      CONTEXT window. If the line is clearly a wrap-up of what was just
+      discussed (often starting with "so," "in summary," "to recap," "the
+      key facts are"), treat it as a meta-comment — do not flag it as a
+      fact, even if it lists specific numbers, because a downstream
+      fact-checker will retrieve different passages for each number and get
+      confused by the mixed claim.
+
+  IS a fact:
+    "The compliance policy requires annual review by December 31st."
+    "The contract states termination requires 30 days written notice."
   
   The difference is never about which document or topic is being discussed — it's
   whether the sentence itself carries a number, date, named decision, or named
@@ -137,15 +181,26 @@ genuinely qualifies for more than one):
   When the document isn't named explicitly in the line itself (e.g. "let's start
   with the annual report," no company given), use the rest of NEW SINCE LAST
   CHECK — not just CONTEXT — to identify which specific document from KNOWLEDGE
-  BASE CONTEXT is meant, the same way you would for a fact. resolved_text must
-  always be a retrieval instruction naming a real document, never a description
-  of the line itself or of your own detection process (e.g. never "the document
-  being discussed at the start of the meeting" — that describes what you noticed,
-  not what to retrieve). If the document genuinely cannot be identified from
-  anything in CONTEXT or NEW SINCE LAST CHECK, skip the flag rather than emit an
-  unusable one.
-  If the line doesn't clearly identify which specific document it's moving to,
-  don't flag it — see check 3.
+  BASE CONTEXT is meant, the same way you would for a fact.
+  
+  If the line is clearly a request to look at, pull up, or open SOME document or
+  file (e.g. "let's look into that file," "can you bring that up"), but no
+  specific document can be confidently identified from CONTEXT or the rest of
+  NEW SINCE LAST CHECK, still flag it as "document_lookup" — do not skip it, and
+  do not guess a title. In this case, resolved_text must stay close to what was
+  actually said, generically (e.g. "Look into the file being referenced" or a
+  close rephrasing) — never invent a specific document name, title, or KB entry
+  that wasn't clearly identifiable. Only name a specific document when you can
+  confidently resolve one from CONTEXT or NEW SINCE LAST CHECK — never as a
+  placeholder guess.
+  
+  resolved_text must always be a retrieval instruction, never a description of
+  the line itself or of your own detection process (e.g. never "the document
+  being discussed at the start of the meeting" — that describes what you
+  noticed, not what to retrieve).
+  
+  If the line doesn't even clearly express an intent to look at some document
+  (too vague or ambiguous to tell), don't flag it — see check 3.
 
 Field guidance:
 - "text": the actual words spoken, quoted directly — never a description of what was

@@ -1,5 +1,4 @@
 # component2/pipeline.py
-from openai.types.responses import container_reference
 import logging
 from typing import AsyncIterator, Callable, Optional
 from shared.schema import TranscriptChunk
