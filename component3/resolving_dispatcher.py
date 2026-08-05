@@ -18,9 +18,9 @@ log = logging.getLogger(__name__)
 class ResolvingDispatcher(Dispatcher):
     def __init__(self, inner: Dispatcher):
         self.inner = inner
-        self.fact_checker = FactCheckAgent()
-        self.answerer = QuestionAnswerAgent()
         self.doc_lookup = DocumentLookupAgent()
+        self.fact_checker = FactCheckAgent(self.doc_lookup)
+        self.answerer = QuestionAnswerAgent(self.doc_lookup)
 
     def emit(self, flag: Flag):
         self.inner.emit(flag)

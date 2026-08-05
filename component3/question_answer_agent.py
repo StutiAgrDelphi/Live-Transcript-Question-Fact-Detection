@@ -4,15 +4,19 @@ from shared.schema import Flag
 from component3.retrieval import search_knowledge_base
 from agent_framework import create_harness_agent
 from agent_framework_openai import OpenAIChatClient
+from component3.document_lookup_agent import DocumentLookupAgent
 
-SYSTEM_PROMPT = """Answer the question using ONLY the retrieved passages below. If they
-don't contain the answer, say so plainly instead of guessing.
+SYSTEM_PROMPT = """Answer the question using ONLY the retrieved passages below.
+If the passages directly answer the question, answer confidently and directly — don't
+hedge if the evidence is there. Only express uncertainty if the passages genuinely do
+not address the question.
 
 Return ONLY JSON: {"answer": "...", "answerable": true|false}
 """
 
 class QuestionAnswerAgent:
-    def __init__(self):
+    def __init__(self, doc_lookup: "DocumentLookupAgent"):
+        self.doc_lookup = doc_lookup
         client = OpenAIChatClient(
             model=os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"],
             api_key=os.environ["AZURE_OPENAI_API_KEY"],
@@ -22,7 +26,8 @@ class QuestionAnswerAgent:
         self.agent = create_harness_agent(client=client, agent_instructions=SYSTEM_PROMPT, name="QuestionAnswerer")
 
     async def answer(self, flag: Flag) -> Flag:
-        chunks = await search_knowledge_base(flag.resolved_text, top_k=5)
+        document_name = await self.doc_lookup.resolve(flag.resolved_text)
+        chunks = await search_knowledge_base(flag.resolved_text, top_k=5, document_name=document_name)
         if not chunks:
             flag.answer = "No relevant information found in the knowledge base."
             flag.resolved = True

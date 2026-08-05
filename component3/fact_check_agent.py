@@ -4,20 +4,31 @@ from shared.schema import Flag
 from component3.retrieval import search_knowledge_base
 from agent_framework import create_harness_agent
 from agent_framework_openai import OpenAIChatClient
+from component3.document_lookup_agent import DocumentLookupAgent
 
 SYSTEM_PROMPT = """You are fact-checking one claim from a live meeting against retrieved
 document excerpts.
 
-- If the passages support the claim as stated -> verdict "correct".
-- If they contradict it (wrong figure, date, name, etc.) -> verdict "incorrect", and give
-  the correct fact per the documents.
-- If the passages don't address the claim -> verdict "unverifiable". Never guess.
+Rules:
+- "incorrect" means the passages DIRECTLY address the same specific thing the claim is
+  about, and state something that contradicts it.
+- "unverifiable" means the passages do NOT directly address what the claim is about —
+  even if they share vocabulary or are loosely on-topic. Absence of confirmation is NOT
+  the same as contradiction. Meeting logistics, opinions, and plans ("we should spend
+  more time on X", "let's regroup tomorrow") are almost always unverifiable, not
+  incorrect, unless a passage specifically discusses that same decision.
+- "correct" means the passages directly support the claim as stated.
+
+When genuinely unsure whether passages address the claim, prefer "unverifiable" over
+"incorrect" — calling something wrong when it was simply never addressed is worse than
+saying you can't confirm it.
 
 Return ONLY JSON: {"verdict": "correct"|"incorrect"|"unverifiable", "correct_fact": "..."|null}
 """
 
 class FactCheckAgent:
-    def __init__(self):
+    def __init__(self, doc_lookup: "DocumentLookupAgent"):
+        self.doc_lookup = doc_lookup
         client = OpenAIChatClient(
             model=os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"],
             api_key=os.environ["AZURE_OPENAI_API_KEY"],
@@ -27,7 +38,8 @@ class FactCheckAgent:
         self.agent = create_harness_agent(client=client, agent_instructions=SYSTEM_PROMPT, name="FactChecker")
 
     async def check(self, flag: Flag) -> Flag:
-        chunks = await search_knowledge_base(flag.resolved_text, top_k=5)
+        document_name = await self.doc_lookup.resolve(flag.resolved_text)
+        chunks = await search_knowledge_base(flag.resolved_text, top_k=5, document_name=document_name)
         if not chunks:
             flag.verdict = "unverifiable"
             flag.resolved = True

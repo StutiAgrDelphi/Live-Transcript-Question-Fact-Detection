@@ -8,6 +8,7 @@ import os
 import json
 from typing import List
 from dotenv import load_dotenv
+from typing import Optional
 
 load_dotenv()
 
@@ -16,9 +17,8 @@ from agent_framework_openai import OpenAIChatClient  # confirm this client also 
                                                         # if not, use the openai/azure-openai SDK directly here
 
 DATABASE_URL = os.environ["DATABASE_URL"]
+MIN_SIMILARITY = 0.35
 _engine = create_engine(DATABASE_URL, future=True)
-
-_EMBED_DEPLOYMENT = os.environ["AZURE_OPENAI_EMBEDDING_DEPLOYMENT"]
 
 # component3/retrieval.py — replace _embed_query
 async def _embed_query(query: str):
@@ -37,10 +37,6 @@ async def _embed_query(query: str):
     #print("Response:", resp)
 
     embedding = resp.data[0].embedding
-
-    print("Embedding type:", type(embedding))
-    print("Embedding length:", len(embedding))
-
     return embedding
 
 
@@ -56,23 +52,36 @@ def _row_to_chunk(content: str, meta_data: dict, similarity: float):
     )
 
 
-async def search_knowledge_base(query: str, top_k: int = 5):
+async def search_knowledge_base(
+    query: str, top_k: int = 5, document_name: Optional[str] = None):
     query_embedding = await _embed_query(query)
-    sql = text("""
-        SELECT content, meta_data, 1 - (embedding <=> :qvec) AS similarity
-        FROM ai.general_knowledge
-        ORDER BY embedding <=> :qvec
-        LIMIT :k
-    """)
+
+    if document_name:
+        sql = text("""
+            SELECT content, meta_data, 1 - (embedding <=> :qvec) AS similarity
+            FROM ai.general_knowledge
+            WHERE meta_data->'citation'->>'document_name' = :doc_name
+            ORDER BY embedding <=> :qvec
+            LIMIT :k
+        """)
+        params = {"qvec": str(query_embedding), "doc_name": document_name, "k": top_k}
+    else:
+        sql = text("""
+            SELECT content, meta_data, 1 - (embedding <=> :qvec) AS similarity
+            FROM ai.general_knowledge
+            ORDER BY embedding <=> :qvec
+            LIMIT :k
+        """)
+        params = {"qvec": str(query_embedding), "k": top_k}
+
     with _engine.connect() as conn:
-        rows = conn.execute(sql, {"qvec": str(query_embedding), "k": top_k}).mappings().all()
+        rows = conn.execute(sql, params).mappings().all()
 
-    results = []
-    for r in rows:
-        meta = r["meta_data"] if isinstance(r["meta_data"], dict) else json.loads(r["meta_data"])
-        results.append(_row_to_chunk(r["content"], meta, r["similarity"]))
-    return results
-
+    results = [
+        _row_to_chunk(r["content"], r["meta_data"] if isinstance(r["meta_data"], dict) else json.loads(r["meta_data"]), r["similarity"])
+        for r in rows
+    ]
+    return [c for c in results if c.similarity >= MIN_SIMILARITY]
 
 async def list_known_documents() -> List[dict]:
     """Distinct documents in the KB, for the document-lookup resolver.
