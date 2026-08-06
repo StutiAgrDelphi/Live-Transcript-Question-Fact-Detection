@@ -4,7 +4,8 @@ from shared.schema import Flag
 from component3.retrieval import search_knowledge_base
 from agent_framework import create_harness_agent
 from agent_framework_openai import OpenAIChatClient
-from component3.document_lookup_agent import DocumentLookupAgent
+from component3.document_lookup_agent import DocumentLookupAgent, _extract_json
+from agent_framework import ChatOptions
 
 SYSTEM_PROMPT = """You are fact-checking one claim from a live meeting against retrieved
 document excerpts.
@@ -23,8 +24,7 @@ When genuinely unsure whether passages address the claim, prefer "unverifiable" 
 "incorrect" — calling something wrong when it was simply never addressed is worse than
 saying you can't confirm it.
 
-Return ONLY JSON: {"verdict": "correct"|"incorrect"|"unverifiable", "correct_fact": "..."|null}
-"""
+Return ONLY JSON: {"verdict": "correct"|"incorrect"|"unverifiable", "correct_fact": "..."|null, "reason": "one short sentence explaining the verdict"}"""
 
 class FactCheckAgent:
     def __init__(self, doc_lookup: "DocumentLookupAgent"):
@@ -38,22 +38,33 @@ class FactCheckAgent:
         self.agent = create_harness_agent(client=client, agent_instructions=SYSTEM_PROMPT, name="FactChecker")
 
     async def check(self, flag: Flag) -> Flag:
-        document_name = await self.doc_lookup.resolve(flag.resolved_text)
-        chunks = await search_knowledge_base(flag.resolved_text, top_k=5, document_name=document_name)
+        candidates = await self.doc_lookup.resolve_candidates(flag.resolved_text)
+        if not candidates:
+            flag.verdict = "unverifiable"
+            flag.reason = "Could not identify which document this claim refers to."
+            flag.resolved = True
+            return flag
+
+        chunks = await search_knowledge_base(flag.resolved_text, top_k=5, document_names=candidates)
         if not chunks:
             flag.verdict = "unverifiable"
+            flag.reason = f"Identified {', '.join(candidates)}, but found no passages addressing this specific point."
+            flag.sources = [{"document": c, "url": None} for c in candidates]
             flag.resolved = True
             return flag
 
         context = "\n\n".join(f"[{c.document_name}] {c.content}" for c in chunks)
         prompt = f"CLAIM: {flag.resolved_text}\n\nRETRIEVED PASSAGES:\n{context}"
-        response = await self.agent.run(prompt, session=self.agent.create_session())
-        data = json.loads(response.text.strip().strip("`").removeprefix("json").strip())
+        response = await self.agent.run(prompt, session=self.agent.create_session(), options=ChatOptions(temperature=0))
+        data = _extract_json(response.text) or {"verdict": "unverifiable"}
 
-        best = chunks[0]
-        flag.verdict = data["verdict"]
+        seen = {}
+        for c in chunks:
+            seen.setdefault(c.document_name, c.document_url)
+
+        flag.verdict = data.get("verdict", "unverifiable")
         flag.correct_fact = data.get("correct_fact")
-        flag.citation_document = best.document_name
-        flag.citation_url = best.document_url
+        flag.reason = data.get("reason")
+        flag.sources = [{"document": d, "url": u} for d, u in seen.items()]
         flag.resolved = True
         return flag
