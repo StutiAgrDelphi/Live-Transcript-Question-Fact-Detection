@@ -44,4 +44,7 @@ class ResolvingDispatcher(Dispatcher):
                 return
             self.inner.emit(resolved)  # same flag_id -> UI updates in place
         except Exception as e:
-            log.warning(f"Resolution failed for flag {flag.flag_id}: {e}")
+            log.warning(f"Resolution failed for flag {flag.flag_id}: {e}", exc_info=True)
+            flag.resolved = True
+            flag.reason = "Resolution failed due to an internal error."
+            self.inner.emit(flag)  # still re-emit — UI must always leave "checking..."

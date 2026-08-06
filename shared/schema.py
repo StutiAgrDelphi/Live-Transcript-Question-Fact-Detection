@@ -9,7 +9,7 @@ components can be built independently and still plug together.
 
 from dataclasses import dataclass, field
 import uuid
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 @dataclass
 class TranscriptChunk:
@@ -47,6 +47,8 @@ class Flag:
     document_found: Optional[bool] = None  # document_lookup
     citation_document: Optional[str] = None
     citation_url: Optional[str] = None
+    reason: Optional[str] = None
+    sources: List[Dict[str, Optional[str]]] = field(default_factory=list)  # [{"document": ..., "url": ...}, ...]
 
 @dataclass
 class RetrievedChunk:

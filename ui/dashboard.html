@@ -160,32 +160,47 @@ function renderFlag(flag) {
 }
 
 function buildResolutionHtml(flag) {
-  const source = flag.citation_url
-    ? `<a class="source" href="${escapeAttr(flag.citation_url)}" target="_blank">Source: ${escapeHtml(flag.citation_document || "")}</a>`
+  const sourcesHtml = Array.isArray(flag.sources) && flag.sources.length
+    ? `<div class="sources">
+        ${flag.sources.map(s =>
+          s.url
+            ? `<a class="source" href="${escapeAttr(s.url)}" target="_blank">${escapeHtml(s.document || s.url)}</a>`
+            : `<div class="source">${escapeHtml(s.document || "")}</div>`
+        ).join("")}
+      </div>`
     : "";
 
   if (flag.type === "fact") {
     const verdict = flag.verdict || "unverifiable";
     const label = { correct: "Correct", incorrect: "Incorrect", unverifiable: "Unverifiable" }[verdict] || verdict;
+
     const correction = (verdict === "incorrect" && flag.correct_fact)
       ? `<div class="correction">${escapeHtml(flag.correct_fact)}</div>` : "";
-    return `<div class="resolution"><span class="verdict ${verdict}">${label}</span>${correction}${source}</div>`;
+
+    const reason = flag.reason
+      ? `<div class="correction">${escapeHtml(flag.reason)}</div>`
+      : "";
+
+    return `<div class="resolution"><span class="verdict ${verdict}">${label}</span>${correction}${reason}${sourcesHtml}</div>`;
   }
 
   if (flag.type === "question") {
     const answer = flag.answer ? escapeHtml(flag.answer) : "No answer found.";
-    return `<div class="resolution">${answer}${source}</div>`;
+    const reason = flag.reason ? `<div class="correction">${escapeHtml(flag.reason)}</div>` : "";
+    return `<div class="resolution">${answer}${reason}${sourcesHtml}</div>`;
   }
 
   if (flag.type === "document_lookup") {
     if (flag.document_found) {
-      const url = escapeAttr(flag.citation_url || "#");
-      return `<div class="resolution"><a href="${url}" target="_blank">${escapeHtml(flag.citation_document || "Open document")}</a></div>`;
+      return `<div class="resolution">${sourcesHtml}</div>`;
     }
-    return `<div class="resolution"><span class="not-found">NOT FOUND</span></div>`;
+    const reason = flag.reason
+      ? `<div class="not-found">${escapeHtml(flag.reason)}</div>`
+      : `<span class="not-found">NOT FOUND</span>`;
+    return `<div class="resolution">${reason}</div>`;
   }
 
-  return `<div class="resolution"></div>`;
+  return `<div class="resolution">${flag.reason ? escapeHtml(flag.reason) : ""}</div>`;
 }
 
 function escapeHtml(str) {

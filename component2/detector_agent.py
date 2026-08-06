@@ -286,7 +286,7 @@ class DetectorAgent:
             name="TranscriptDetector",
             description="Detects relevant questions and facts from live meeting transcripts.",
             disable_tool_auto_approval=True,
-            
+            default_options={"temperature": 0.1}
         )
 
     async def process_window(

@@ -1,27 +1,35 @@
 # component3/document_lookup_agent.py
 """
-Not semantic search — an entity match. The question isn't "what content is
-related to this," it's "did the speaker name a document that exists in the
-KB, and what's its link." An LLM pick against the (short) list of known
-document names is more reliable here than embedding similarity on a whole
-spoken sentence.
+Not semantic search — an entity match. Returns however many documents (0, 1, or
+more) a spoken line plausibly refers to. Zero or multiple candidates are both
+legitimate, common outcomes — the caller decides what to do with each case
+rather than this agent forcing a single answer.
 """
-import json, os
-from typing import Dict
+import json
+import os
+import re
+from typing import Dict, List, Optional
+
+from agent_framework import create_harness_agent, ChatOptions
+from agent_framework_openai import OpenAIChatClient
+
 from shared.schema import Flag
 from component3.retrieval import list_known_documents
-from agent_framework import create_harness_agent
-from agent_framework_openai import OpenAIChatClient
-from typing import Optional
 
-SYSTEM_PROMPT = """You're given a line from a meeting where someone referenced a document,
-and a list of document names actually available in the knowledge base.
+SYSTEM_PROMPT = """You're given a line from a meeting and a list of document names available
+in the knowledge base.
 
-Pick the single document from the list that the speaker meant, if any clearly match.
-If nothing in the list plausibly matches, say so — do not force a match.
+Return every document from the list that the line clearly and specifically refers to — by
+company name, policy name, or title keywords. A generic reference like "the annual report" or
+"that policy" with nothing identifying which one does NOT count as a match to anything, even
+if only one candidate seems likely — return an empty list rather than guessing.
 
-Return ONLY JSON: {"matched_document_name": "..."|null}
+If the line plausibly refers to two or more documents (e.g. it's comparing them, or the
+reference is genuinely ambiguous between them), return all of them — do not arbitrarily pick one.
+
+Return ONLY JSON: {"matched_document_names": ["..."]}   (empty list if nothing clearly matches)
 """
+
 
 class DocumentLookupAgent:
     def __init__(self):
@@ -38,24 +46,50 @@ class DocumentLookupAgent:
         docs = await list_known_documents()
         self._index = {d["document_name"]: d["document_url"] for d in docs if d["document_name"]}
 
-    async def resolve(self, text: str) -> Optional[str]:
-        """Returns the matched known document_name, or None if nothing clearly matches.
-        Shared utility — also used by FactCheckAgent and QuestionAnswerAgent to scope
-        their retrieval before searching."""
+    async def resolve_candidates(self, text: str) -> List[str]:
+        """Returns 0+ known document_names this text plausibly refers to.
+        Used by FactCheckAgent and QuestionAnswerAgent to scope retrieval,
+        and by lookup() below for the document_lookup flag type itself."""
         if not self._index:
             await self.refresh()
+
         names = "\n".join(f"- {n}" for n in self._index.keys())
         prompt = f"LINE: {text}\n\nKNOWN DOCUMENTS:\n{names}"
-        response = await self.agent.run(prompt, session=self.agent.create_session())
-        data = json.loads(response.text.strip().strip("`").removeprefix("json").strip())
-        matched = data.get("matched_document_name")
-        return matched if matched in self._index else None
+        response = await self.agent.run(
+            prompt, session=self.agent.create_session(), options=ChatOptions(temperature=0)
+        )
+        data = _extract_json(response.text)
+        matched = data.get("matched_document_names", []) if data else []
+        return [m for m in matched if m in self._index]
 
     async def lookup(self, flag: Flag) -> Flag:
-        matched = await self.resolve(flag.resolved_text)
-        flag.document_found = matched is not None
+        candidates = await self.resolve_candidates(flag.resolved_text)
+        flag.document_found = len(candidates) == 1  # ambiguous (2+) is not a "found" result either
+
         if flag.document_found:
-            flag.citation_document = matched
-            flag.citation_url = self._index[matched]
+            name = candidates[0]
+            flag.citation_document = name
+            flag.citation_url = self._index[name]
+            flag.sources = [{"document": name, "url": self._index[name]}]
+        elif len(candidates) > 1:
+            flag.reason = f"Ambiguous — could match any of: {', '.join(candidates)}"
+            flag.sources = [{"document": c, "url": self._index.get(c)} for c in candidates]
+        else:
+            flag.reason = "No document in the knowledge base matches this reference."
+
         flag.resolved = True
         return flag
+
+
+def _extract_json(text: str) -> Optional[dict]:
+    """Robust-ish JSON extraction — pulls the first {...} block instead of
+    assuming the LLM wrapped output exactly as asked (fences, stray text, etc.
+    vary run to run). Returns None on failure rather than raising, so callers
+    can handle it as 'no result' instead of hanging."""
+    match = re.search(r"\{.*\}", text, re.DOTALL)
+    if not match:
+        return None
+    try:
+        return json.loads(match.group(0))
+    except json.JSONDecodeError:
+        return None
