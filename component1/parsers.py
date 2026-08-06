@@ -67,7 +67,7 @@ def parse_txt_transcript(path: str) -> List[TranscriptChunk]:
 # ---------------------------------------------------------------------------
 
 _DOCX_TURN_RE = re.compile(
-    r"^(?P<speaker>.+?)\s{2,}(?P<ts>\d{1,2}(?::\d{2}){1,2})\s*\n(?P<text>.*)$",
+    r"^(?P<speaker>.+?)\s+(?P<ts>\d{1,2}(?::\d{2}){1,2})\s*\n(?P<text>.*)$",
     re.DOTALL,
 )
 

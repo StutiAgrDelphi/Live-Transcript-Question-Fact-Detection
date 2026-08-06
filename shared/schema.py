@@ -7,8 +7,9 @@ import from here rather than redefining it locally, so the two
 components can be built independently and still plug together.
 """
 
-from dataclasses import dataclass
-
+from dataclasses import dataclass, field
+import uuid
+from typing import Optional, List
 
 @dataclass
 class TranscriptChunk:
@@ -37,3 +38,20 @@ class Flag:
     speaker: str
     elapsed_seconds: float
     confidence: float
+    flag_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+
+    resolved: bool = False
+    verdict: Optional[str] = None          # fact: "correct" | "incorrect" | "unverifiable"
+    correct_fact: Optional[str] = None     # fact, only when verdict == "incorrect"
+    answer: Optional[str] = None           # question
+    document_found: Optional[bool] = None  # document_lookup
+    citation_document: Optional[str] = None
+    citation_url: Optional[str] = None
+
+@dataclass
+class RetrievedChunk:
+    content: str
+    document_name: str
+    document_url: Optional[str]
+    page_numbers: List[int]
+    similarity: float
