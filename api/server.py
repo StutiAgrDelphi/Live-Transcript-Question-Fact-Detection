@@ -21,6 +21,11 @@ Teams meeting ID):
                               the ingest connection for the same session_id to already
                               be open (that's what creates the active session) — connect
                               consumers after the ingest side has started.
+
+                              Takes ?user_id=... as a query param. user_ROLE is
+                              deliberately NOT accepted from the client — it's looked
+                              up server-side from access.users, so a viewer can't just
+                              pass ?user_role=admin and grant themselves full access.
 """
 import logging
 from typing import AsyncIterator, Dict
@@ -33,6 +38,7 @@ from shared.schema import TranscriptChunk
 from component2.pipeline import DetectorPipeline
 from component2.dispatcher import WebSocketDispatcher
 from component3.resolving_dispatcher import ResolvingDispatcher
+from component3.retrieval import get_user_role
 
 log = logging.getLogger(__name__)
 app = FastAPI(title="Meeting Intelligence Detection Service")
@@ -93,14 +99,17 @@ async def ingest_endpoint(websocket: WebSocket, session_id: str):
 
 
 @app.websocket("/ws/flags/{session_id}")
-async def flags_endpoint(websocket: WebSocket, session_id: str):
+async def flags_endpoint(websocket: WebSocket, session_id: str, user_id: str):
     await websocket.accept()
     pipeline = _active_sessions.get(session_id)
     if pipeline is None or not hasattr(pipeline.dispatcher, "register"):
         await websocket.close(code=4404, reason=f"No active session: {session_id}")
         return
 
-    pipeline.dispatcher.register(websocket)
+    # Role is NEVER accepted from the client — always looked up server-side.
+    user_role = await get_user_role(user_id)
+
+    pipeline.dispatcher.register(websocket, user_id, user_role)
     try:
         while True:
             # This socket is output-only from our side; just keep it open and

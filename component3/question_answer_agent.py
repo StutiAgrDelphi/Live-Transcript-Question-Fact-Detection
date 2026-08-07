@@ -16,8 +16,10 @@ Return ONLY JSON: {"answer": "...", "answerable": true|false}
 """
 
 class QuestionAnswerAgent:
-    def __init__(self, doc_lookup: "DocumentLookupAgent"):
+    def __init__(self, doc_lookup: "DocumentLookupAgent", resolver_user_id: str, resolver_role: str):
         self.doc_lookup = doc_lookup
+        self.resolver_user_id = resolver_user_id
+        self.resolver_role = resolver_role
         client = OpenAIChatClient(
             model=os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"],
             api_key=os.environ["AZURE_OPENAI_API_KEY"],
@@ -33,7 +35,15 @@ class QuestionAnswerAgent:
             flag.resolved = True
             return flag
 
-        chunks = await search_knowledge_base(flag.resolved_text, top_k=5, document_names=candidates)
+        # Resolution runs under the RESOLVER identity — same reasoning as
+        # FactCheckAgent.check(). Per-viewer redaction happens at delivery time.
+        chunks = await search_knowledge_base(
+            self.resolver_user_id,
+            self.resolver_role,
+            flag.resolved_text,
+            top_k=5,
+            document_names=candidates,
+        )
         if not chunks:
             flag.answer = "No relevant information found in the knowledge base."
             flag.reason = f"Identified {', '.join(candidates)}, but found no passages addressing this question."

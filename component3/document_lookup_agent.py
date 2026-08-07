@@ -4,6 +4,13 @@ Not semantic search — an entity match. Returns however many documents (0, 1, o
 more) a spoken line plausibly refers to. Zero or multiple candidates are both
 legitimate, common outcomes — the caller decides what to do with each case
 rather than this agent forcing a single answer.
+
+ACCESS CONTROL: entity matching runs under the RESOLVER identity (organizer-
+level, sees the full document index) because a single meeting has many
+viewers with different permissions and there's no one "current viewer" at
+resolution time. Matching a document by NAME is not a content leak — the
+actual redaction of restricted content happens later, per-viewer, at
+delivery time in component2/dispatcher.py.
 """
 import json
 import os
@@ -32,7 +39,7 @@ Return ONLY JSON: {"matched_document_names": ["..."]}   (empty list if nothing c
 
 
 class DocumentLookupAgent:
-    def __init__(self):
+    def __init__(self, resolver_user_id: str, resolver_role: str):
         client = OpenAIChatClient(
             model=os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"],
             api_key=os.environ["AZURE_OPENAI_API_KEY"],
@@ -40,10 +47,12 @@ class DocumentLookupAgent:
             api_version="preview",
         )
         self.agent = create_harness_agent(client=client, agent_instructions=SYSTEM_PROMPT, name="DocumentMatcher")
+        self.resolver_user_id = resolver_user_id
+        self.resolver_role = resolver_role
         self._index: Dict[str, str] = {}
 
     async def refresh(self):
-        docs = await list_known_documents()
+        docs = await list_known_documents(self.resolver_user_id, self.resolver_role)
         self._index = {d["document_name"]: d["document_url"] for d in docs if d["document_name"]}
 
     async def resolve_candidates(self, text: str) -> List[str]:
